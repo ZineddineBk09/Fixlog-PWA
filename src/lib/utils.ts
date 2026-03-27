@@ -7,6 +7,7 @@ import {
   type Locale,
 } from "@/lib/i18n";
 import type { LogCategory, LogEventRecord, LogStatus } from "@/lib/db";
+import type { InviteStatus } from "@/lib/invite-service";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -69,12 +70,35 @@ export function buildWhatsAppShareUrl(
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
+export function buildInviteShareText(
+  inviteUrl: string,
+  inviterName: string,
+  locale: Locale,
+) {
+  return locale === "ar"
+    ? `تمت دعوتك للانضمام إلى فيكس لوغ بواسطة ${inviterName}.\nاستخدم هذا الرابط لإنشاء حسابك:\n${inviteUrl}`
+    : `You were invited to join FixLog by ${inviterName}.\nUse this link to create your account:\n${inviteUrl}`;
+}
+
 export function getStatusLabel(status: LogStatus, locale: Locale) {
   return translate(locale, statusLabelKeys[status]);
 }
 
 export function getCategoryLabel(category: LogCategory, locale: Locale) {
   return translate(locale, categoryLabelKeys[category]);
+}
+
+export function getInviteStatusLabel(status: InviteStatus, locale: Locale) {
+  switch (status) {
+    case "accepted":
+      return translate(locale, "inviteStatusAccepted");
+    case "expired":
+      return translate(locale, "inviteStatusExpired");
+    case "revoked":
+      return translate(locale, "inviteStatusRevoked");
+    default:
+      return translate(locale, "inviteStatusPending");
+  }
 }
 
 export function getEventMessage(event: LogEventRecord, locale: Locale) {

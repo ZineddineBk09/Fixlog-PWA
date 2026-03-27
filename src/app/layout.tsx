@@ -7,7 +7,7 @@ import { LocaleProvider } from "@/providers/locale-provider";
 import { SyncProvider } from "@/providers/sync-provider";
 import { SerwistProvider } from "./serwist";
 import "./globals.css";
-import { localeStorageKey, type Locale } from "@/lib/i18n";
+import { buildRootMetadata, getRequestLocale } from "@/lib/metadata";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -24,31 +24,31 @@ const cairo = Cairo({
   subsets: ["arabic", "latin"],
 });
 
-export const metadata: Metadata = {
-  applicationName: "FixLog",
-  title: {
-    default: "FixLog | فيكس لوغ",
-    template: "%s | FixLog",
-  },
-  description:
-    "Offline-first maintenance logbook for factory mechanics with Arabic support.",
-  icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-    ],
-    shortcut: "/favicon.svg",
-    apple: "/icons/icon-192x192.png",
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "FixLog",
-  },
-  formatDetection: {
-    telephone: false,
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const locale = getRequestLocale(cookieStore);
+  const metadata = buildRootMetadata(locale);
+
+  return {
+    ...metadata,
+    icons: {
+      icon: [
+        { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      ],
+      shortcut: "/favicon.svg",
+      apple: "/icons/icon-192x192.png",
+    },
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: locale === "ar" ? "فيكس لوغ" : "FixLog",
+    },
+    formatDetection: {
+      telephone: false,
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#1d4ed8",
@@ -64,9 +64,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const initialLocale = (
-    cookieStore.get(localeStorageKey)?.value === "en" ? "en" : "ar"
-  ) as Locale;
+  const initialLocale = getRequestLocale(cookieStore);
 
   return (
     <html

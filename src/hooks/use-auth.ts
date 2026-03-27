@@ -28,9 +28,18 @@ function getStoredAuth(): Mechanic | null {
   }
 }
 
+function persistAuth(mechanic: Mechanic) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(mechanic));
+}
+
 export function useAuth() {
   const [mechanic, setMechanic] = useState<Mechanic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const authenticate = useCallback((nextMechanic: Mechanic) => {
+    persistAuth(nextMechanic);
+    setMechanic(nextMechanic);
+  }, []);
 
   useEffect(() => {
     setMechanic(getStoredAuth());
@@ -45,20 +54,24 @@ export function useAuth() {
       try {
         // Try remote validation first
         if (navigator.onLine) {
-          const { data, error } = await supabase
-            .from("mechanics")
-            .select("id, name")
-            .eq("name", name)
-            .eq("pin_code", pin)
-            .single();
+          const { data, error } = await supabase.rpc(
+            "validate_mechanic_login",
+            {
+              p_name: name,
+              p_pin: pin,
+            },
+          );
 
-          if (error || !data) {
+          const account = Array.isArray(data) ? data[0] : data;
+
+          if (error || !account) {
             return { success: false, errorKey: "invalidNameOrPin" };
           }
 
-          const auth: Mechanic = { id: data.id, name: data.name };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(auth));
+          const auth: Mechanic = { id: account.id, name: account.name };
+          persistAuth(auth);
           setMechanic(auth);
+          await db.mechanics.put(auth);
           return { success: true };
         }
 
@@ -91,6 +104,7 @@ export function useAuth() {
     mechanic,
     isLoggedIn: !!mechanic,
     isLoading,
+    authenticate,
     login,
     logout,
   };

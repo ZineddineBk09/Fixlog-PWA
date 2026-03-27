@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, PlusCircle, ClipboardList } from "lucide-react";
+import { Home, PlusCircle, ClipboardList, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePendingCount } from "@/hooks/use-logs";
 import { useLocale } from "@/providers/locale-provider";
@@ -15,6 +15,7 @@ export function BottomNav() {
     { href: "/", label: t("feed"), icon: Home },
     { href: "/new", label: t("newLog"), icon: PlusCircle },
     { href: "/pending", label: t("pendingTasks"), icon: ClipboardList },
+    { href: "/invite", label: t("invites"), icon: UserPlus },
   ] as const;
 
   return (

@@ -7,6 +7,7 @@ interface AuthContextValue {
   mechanic: Mechanic | null;
   isLoggedIn: boolean;
   isLoading: boolean;
+  authenticate: (mechanic: Mechanic) => void;
   login: (
     name: string,
     pin: string,

@@ -119,6 +119,9 @@ export default function LoginPage() {
           <p className="text-center text-muted-foreground">
             {t("loginSubtitle")}
           </p>
+          <p className="max-w-xs text-center text-xs text-muted-foreground">
+            {t("inviteOnlyAccess")}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
