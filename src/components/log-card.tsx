@@ -4,8 +4,8 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  formatCategoryList,
   formatRelativeTime,
-  getCategoryLabel,
   getStatusLabel,
 } from "@/lib/utils";
 import { type LogRecord } from "@/lib/db";
@@ -34,7 +34,7 @@ export function LogCard({ log }: LogCardProps) {
                   variant="secondary"
                   className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                  {getCategoryLabel(log.category, locale)}
+                  {formatCategoryList(log.category, locale)}
                 </Badge>
                 <Badge
                   className={cn(

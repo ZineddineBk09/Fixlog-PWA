@@ -88,6 +88,16 @@ export function getCategoryLabel(category: LogCategory, locale: Locale) {
   return translate(locale, categoryLabelKeys[category]);
 }
 
+export function getCategoryLabels(categories: LogCategory[], locale: Locale) {
+  return categories.map((category) => getCategoryLabel(category, locale));
+}
+
+export function formatCategoryList(categories: LogCategory[], locale: Locale) {
+  return getCategoryLabels(categories, locale).join(
+    translate(locale, "categorySummarySeparator"),
+  );
+}
+
 export function getInviteStatusLabel(status: InviteStatus, locale: Locale) {
   switch (status) {
     case "accepted":

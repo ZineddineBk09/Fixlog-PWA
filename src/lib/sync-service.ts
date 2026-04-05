@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { parseCategories, serializeCategories } from "./log-categories";
 import { supabase } from "./supabase";
 
 let isSyncing = false;
@@ -63,7 +64,7 @@ export const syncService = {
         updated_at: log.updated_at,
         author_name: log.author_name,
         machine_name: log.machine_name,
-        category: log.category,
+        category: serializeCategories(log.category),
         symptoms: log.symptoms,
         solution_applied: log.solution_applied,
         status: log.status,
@@ -106,7 +107,11 @@ export const syncService = {
       const pendingIds = new Set(pendingLocalLogs.map((log) => log.id));
 
       const logsToPut = remoteLogs
-        .map((log) => ({ ...log, sync_status: "synced" as const }))
+        .map((log) => ({
+          ...log,
+          category: parseCategories(log.category),
+          sync_status: "synced" as const,
+        }))
         .filter((log) => !pendingIds.has(log.id));
 
       if (logsToPut.length > 0) {

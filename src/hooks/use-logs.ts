@@ -11,6 +11,7 @@ import {
   type LogStatus,
   type MachineRecord,
 } from "@/lib/db";
+import { parseCategories, serializeCategories } from "@/lib/log-categories";
 import { syncService } from "@/lib/sync-service";
 import { supabase } from "@/lib/supabase";
 import type { Mechanic } from "@/hooks/use-auth";
@@ -38,14 +39,23 @@ export interface CreateMachineResult {
 }
 
 const fuseOptions = {
-  keys: ["machine_name", "symptoms", "solution_applied", "author_name"],
+  keys: ["machine_name", "symptoms", "solution_applied", "author_name", "category"],
   threshold: 0.4,
   ignoreLocation: true,
 };
 
+function normalizeLogRecord(log: LogRecord): LogRecord {
+  return {
+    ...log,
+    category: parseCategories(log.category),
+  };
+}
+
 export function useLogs(filters?: LogFilters) {
   const logs = useLiveQuery(async () => {
-    let results = await db.logs.orderBy("created_at").reverse().toArray();
+    let results = (await db.logs.orderBy("created_at").reverse().toArray()).map(
+      normalizeLogRecord,
+    );
 
     if (filters?.status) {
       results = results.filter((l) => l.status === filters.status);
@@ -73,7 +83,10 @@ export function useLogs(filters?: LogFilters) {
 }
 
 export function useLog(id: string) {
-  const log = useLiveQuery(async () => db.logs.get(id), [id]);
+  const log = useLiveQuery(async () => {
+    const record = await db.logs.get(id);
+    return record ? normalizeLogRecord(record) : null;
+  }, [id]);
 
   return { log: log ?? null, isLoading: log === undefined };
 }
@@ -156,7 +169,11 @@ export async function updateLog(
 
   const { error } = await supabase
     .from("maintenance_logs")
-    .update({ ...data, updated_at: updatedAt })
+    .update({
+      ...data,
+      category: data.category ? serializeCategories(data.category) : undefined,
+      updated_at: updatedAt,
+    })
     .eq("id", id);
 
   if (error) {

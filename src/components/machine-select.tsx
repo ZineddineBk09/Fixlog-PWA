@@ -105,10 +105,10 @@ export function MachineSelect({
     <>
       <div className="space-y-3">
         <Select value={value} onValueChange={(v) => onValueChange(v ?? "")}>
-          <SelectTrigger className="h-14 rounded-2xl border-white/70 bg-white/90 text-base shadow-sm">
+          <SelectTrigger className="h-14 w-full rounded-2xl border-white/70 bg-white/90 text-base shadow-sm">
             <SelectValue placeholder={t("selectMachine")} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[min(70vh,28rem)] rounded-2xl">
             <div className="px-2 pb-2">
               <div className="relative">
                 <Search

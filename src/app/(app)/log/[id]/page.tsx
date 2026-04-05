@@ -1,13 +1,18 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { CategoryChips } from "@/components/category-chips";
 import { LogHistory } from "@/components/log-history";
-import { useLog, useLogEvents, updateLog } from "@/hooks/use-logs";
+import { MachineSelect } from "@/components/machine-select";
+import { StatusToggle } from "@/components/status-toggle";
+import { createMachine, useLog, useLogEvents, updateLog } from "@/hooks/use-logs";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useAuthContext } from "@/providers/auth-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -19,6 +24,8 @@ import {
   getCategoryLabel,
   getStatusLabel,
 } from "@/lib/utils";
+import type { LogStatus } from "@/lib/db";
+import type { LogCategory } from "@/lib/log-categories";
 import {
   ArrowLeft,
   Share2,
@@ -41,6 +48,23 @@ export default function LogDetailPage({
   const { isOnline } = useOnlineStatus();
   const { mechanic } = useAuthContext();
   const { locale, t, isRTL } = useLocale();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSavingEdits, setIsSavingEdits] = useState(false);
+  const [editMachine, setEditMachine] = useState("");
+  const [editCategory, setEditCategory] = useState<LogCategory[]>([]);
+  const [editSymptoms, setEditSymptoms] = useState("");
+  const [editSolution, setEditSolution] = useState("");
+  const [editStatus, setEditStatus] = useState<LogStatus>("Pending");
+
+  useEffect(() => {
+    if (!log) return;
+
+    setEditMachine(log.machine_name);
+    setEditCategory(log.category);
+    setEditSymptoms(log.symptoms);
+    setEditSolution(log.solution_applied ?? "");
+    setEditStatus(log.status);
+  }, [log]);
 
   if (isLoading) {
     return (
@@ -82,11 +106,22 @@ export default function LogDetailPage({
   }
 
   function handleEdit() {
+    if (!log) return;
+    if (log.status !== "Pending") {
+      toast.info(t("reopenAsPending"));
+      return;
+    }
     if (!isOnline) {
       toast.error(t("cannotEditOffline"));
       return;
     }
-    toast.info(t("editComingSoon"));
+
+    setEditMachine(log.machine_name);
+    setEditCategory(log.category);
+    setEditSymptoms(log.symptoms);
+    setEditSolution(log.solution_applied ?? "");
+    setEditStatus(log.status);
+    setIsEditing(true);
   }
 
   async function handleToggleStatus() {
@@ -95,17 +130,67 @@ export default function LogDetailPage({
       toast.error(t("cannotEditOffline"));
       return;
     }
-    const newStatus = log.status === "Pending" ? "Fixed" : "Pending";
-    const success = await updateLog(log.id, { status: newStatus }, mechanic);
+
+    if (log.status === "Pending") {
+      setEditMachine(log.machine_name);
+      setEditCategory(log.category);
+      setEditSymptoms(log.symptoms);
+      setEditSolution(log.solution_applied ?? "");
+      setEditStatus("Fixed");
+      setIsEditing(true);
+      return;
+    }
+
+    const success = await updateLog(log.id, { status: "Pending" }, mechanic);
     if (success) {
       toast.success(
-        newStatus === "Fixed"
-          ? t("statusChangedFixed")
-          : t("statusChangedPending"),
+        t("statusChangedPending"),
       );
     } else {
       toast.error(t("updateFailed"));
     }
+  }
+
+  async function handleSaveEdits() {
+    if (!log || !mechanic) return;
+    if (!editMachine) {
+      toast.error(t("selectMachineError"));
+      return;
+    }
+    if (editCategory.length === 0) {
+      toast.error(t("selectCategoryError"));
+      return;
+    }
+    if (!editSymptoms.trim()) {
+      toast.error(t("symptomsRequired"));
+      return;
+    }
+
+    setIsSavingEdits(true);
+    const success = await updateLog(
+      log.id,
+      {
+        machine_name: editMachine,
+        category: editCategory,
+        symptoms: editSymptoms.trim(),
+        solution_applied: editSolution.trim() || null,
+        status: editStatus,
+      },
+      mechanic,
+    );
+    setIsSavingEdits(false);
+
+    if (!success) {
+      toast.error(t("updateFailed"));
+      return;
+    }
+
+    setIsEditing(false);
+    toast.success(
+      editStatus === "Fixed" && log.status !== "Fixed"
+        ? t("statusChangedFixed")
+        : t("saveChanges"),
+    );
   }
 
   return (
@@ -144,9 +229,15 @@ export default function LogDetailPage({
           </Badge>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Badge variant="secondary" className="rounded-full px-3 py-1">
-            {getCategoryLabel(log.category, locale)}
-          </Badge>
+          {log.category.map((category) => (
+            <Badge
+              key={category}
+              variant="secondary"
+              className="rounded-full px-3 py-1"
+            >
+              {getCategoryLabel(category, locale)}
+            </Badge>
+          ))}
           {log.sync_status === "pending_insert" && (
             <Badge
               variant="outline"
@@ -181,24 +272,101 @@ export default function LogDetailPage({
         </div>
       )}
 
-      <div className="rounded-[2rem] border border-white/60 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-card/80">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("symptoms")}
-          </h2>
-          <p className="text-base leading-7">{log.symptoms}</p>
-        </div>
-      </div>
-
-      {log.solution_applied && (
+      {isEditing ? (
         <div className="rounded-[2rem] border border-white/60 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-card/80">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("solution")}
-            </h2>
-            <p className="text-base leading-7">{log.solution_applied}</p>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">{t("machine")}</Label>
+              <MachineSelect
+                value={editMachine}
+                onValueChange={setEditMachine}
+                onCreateMachine={createMachine}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">{t("category")}</Label>
+              <CategoryChips value={editCategory} onValueChange={setEditCategory} />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-symptoms" className="text-base font-semibold">
+                {t("symptoms")}
+              </Label>
+              <Textarea
+                id="edit-symptoms"
+                value={editSymptoms}
+                onChange={(e) => setEditSymptoms(e.target.value)}
+                placeholder={t("symptomsPlaceholder")}
+                rows={4}
+                className="min-h-[120px] resize-none rounded-2xl border-white/70 bg-white/85 text-base shadow-sm dark:border-white/10 dark:bg-card/80"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-solution" className="text-base font-semibold">
+                {t("solution")}{" "}
+                <span className="font-normal text-muted-foreground">
+                  ({t("optional")})
+                </span>
+              </Label>
+              <Textarea
+                id="edit-solution"
+                value={editSolution}
+                onChange={(e) => setEditSolution(e.target.value)}
+                placeholder={t("solutionPlaceholder")}
+                rows={3}
+                className="min-h-[100px] resize-none rounded-2xl border-white/70 bg-white/85 text-base shadow-sm dark:border-white/10 dark:bg-card/80"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">{t("status")}</Label>
+              <StatusToggle value={editStatus} onValueChange={setEditStatus} />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 flex-1 rounded-2xl"
+                onClick={() => setIsEditing(false)}
+              >
+                {t("cancel")}
+              </Button>
+              <Button
+                type="button"
+                className="h-12 flex-1 rounded-2xl"
+                onClick={handleSaveEdits}
+                disabled={isSavingEdits}
+              >
+                {isSavingEdits ? t("savingChanges") : t("saveChanges")}
+              </Button>
+            </div>
           </div>
         </div>
+      ) : (
+        <>
+          <div className="rounded-[2rem] border border-white/60 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-card/80">
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("symptoms")}
+              </h2>
+              <p className="text-base leading-7">{log.symptoms}</p>
+            </div>
+          </div>
+
+          {log.solution_applied && (
+            <div className="rounded-[2rem] border border-white/60 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-card/80">
+              <div className="space-y-1">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("solution")}
+                </h2>
+                <p className="text-base leading-7">{log.solution_applied}</p>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <div className="rounded-[2rem] border border-white/60 bg-white/85 p-5 shadow-sm dark:border-white/10 dark:bg-card/80">
@@ -228,6 +396,7 @@ export default function LogDetailPage({
               variant="outline"
               onClick={handleShare}
               className="h-12 flex-1 rounded-2xl text-base"
+              disabled={isEditing}
             >
               <Share2 className={cn("h-4 w-4", isRTL ? "ml-2" : "mr-2")} />
               {t("shareViaWhatsApp")}
@@ -236,6 +405,8 @@ export default function LogDetailPage({
               variant="outline"
               onClick={handleEdit}
               className="h-12 rounded-2xl"
+              disabled={isEditing || log.status !== "Pending"}
+              aria-label={t("editBreakdown")}
             >
               <Pencil className="h-4 w-4" />
             </Button>

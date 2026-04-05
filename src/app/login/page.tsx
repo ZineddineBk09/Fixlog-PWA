@@ -141,11 +141,11 @@ export default function LoginPage() {
             >
               <SelectTrigger
                 id="mechanic-name"
-                className="h-14 rounded-2xl bg-white/80 text-base shadow-sm dark:bg-card/80"
+                className="h-14 w-full rounded-2xl bg-white/80 text-base shadow-sm dark:bg-card/80"
               >
                 <SelectValue placeholder={t("selectYourName")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[min(70vh,24rem)] rounded-2xl">
                 {mechanics.map((m) => (
                   <SelectItem
                     key={m.id}

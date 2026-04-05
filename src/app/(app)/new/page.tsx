@@ -13,10 +13,8 @@ import { CameraInput } from "@/components/camera-input";
 import { useAuthContext } from "@/providers/auth-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { createLog, createMachine } from "@/hooks/use-logs";
+import type { LogCategory } from "@/lib/log-categories";
 import { formatDate, formatTime } from "@/lib/utils";
-import type { LogRecord } from "@/lib/db";
-
-type Category = LogRecord["category"];
 
 export default function NewLogPage() {
   const router = useRouter();
@@ -24,7 +22,7 @@ export default function NewLogPage() {
   const { locale, t } = useLocale();
 
   const [machine, setMachine] = useState("");
-  const [category, setCategory] = useState<Category | "">("");
+  const [category, setCategory] = useState<LogCategory[]>([]);
   const [symptoms, setSymptoms] = useState("");
   const [solution, setSolution] = useState("");
   const [status, setStatus] = useState<"Fixed" | "Pending">("Pending");
@@ -40,7 +38,7 @@ export default function NewLogPage() {
       toast.error(t("selectMachineError"));
       return;
     }
-    if (!category) {
+    if (category.length === 0) {
       toast.error(t("selectCategoryError"));
       return;
     }
@@ -61,7 +59,7 @@ export default function NewLogPage() {
         {
           author_name: mechanic.name,
           machine_name: machine,
-          category: category as Category,
+          category,
           symptoms: symptoms.trim(),
           solution_applied: solution.trim() || null,
           status,
@@ -109,7 +107,7 @@ export default function NewLogPage() {
             <Label className="text-base font-semibold">{t("category")}</Label>
             <CategoryChips
               value={category}
-              onValueChange={(v) => setCategory(v)}
+              onValueChange={setCategory}
             />
           </div>
         </div>
