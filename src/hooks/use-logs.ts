@@ -12,6 +12,7 @@ import {
   type MachineRecord,
 } from "@/lib/db";
 import { parseCategories, serializeCategories } from "@/lib/log-categories";
+import { normalizeMotive } from "@/lib/log-motives";
 import { syncService } from "@/lib/sync-service";
 import { supabase } from "@/lib/supabase";
 import type { Mechanic } from "@/hooks/use-auth";
@@ -39,7 +40,14 @@ export interface CreateMachineResult {
 }
 
 const fuseOptions = {
-  keys: ["machine_name", "symptoms", "solution_applied", "author_name", "category"],
+  keys: [
+    "machine_name",
+    "motive",
+    "symptoms",
+    "solution_applied",
+    "author_name",
+    "category",
+  ],
   threshold: 0.4,
   ignoreLocation: true,
 };
@@ -47,6 +55,7 @@ const fuseOptions = {
 function normalizeLogRecord(log: LogRecord): LogRecord {
   return {
     ...log,
+    motive: normalizeMotive(log.motive),
     category: parseCategories(log.category),
   };
 }

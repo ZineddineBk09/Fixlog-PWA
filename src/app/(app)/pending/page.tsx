@@ -39,7 +39,7 @@ export default function PendingPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-col gap-y-3">
           {logs.map((log) => (
             <LogCard key={log.id} log={log} />
           ))}

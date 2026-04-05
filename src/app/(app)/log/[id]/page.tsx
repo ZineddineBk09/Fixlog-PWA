@@ -11,8 +11,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { CategoryChips } from "@/components/category-chips";
 import { LogHistory } from "@/components/log-history";
 import { MachineSelect } from "@/components/machine-select";
+import { MotiveSelect } from "@/components/motive-select";
 import { StatusToggle } from "@/components/status-toggle";
-import { createMachine, useLog, useLogEvents, updateLog } from "@/hooks/use-logs";
+import {
+  createMachine,
+  useLog,
+  useLogEvents,
+  updateLog,
+} from "@/hooks/use-logs";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useAuthContext } from "@/providers/auth-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -22,10 +28,12 @@ import {
   formatDate,
   formatTime,
   getCategoryLabel,
+  getMotiveLabel,
   getStatusLabel,
 } from "@/lib/utils";
 import type { LogStatus } from "@/lib/db";
 import type { LogCategory } from "@/lib/log-categories";
+import type { LogMotive } from "@/lib/log-motives";
 import {
   ArrowLeft,
   Share2,
@@ -51,6 +59,7 @@ export default function LogDetailPage({
   const [isEditing, setIsEditing] = useState(false);
   const [isSavingEdits, setIsSavingEdits] = useState(false);
   const [editMachine, setEditMachine] = useState("");
+  const [editMotive, setEditMotive] = useState<LogMotive>("Corrective");
   const [editCategory, setEditCategory] = useState<LogCategory[]>([]);
   const [editSymptoms, setEditSymptoms] = useState("");
   const [editSolution, setEditSolution] = useState("");
@@ -60,6 +69,7 @@ export default function LogDetailPage({
     if (!log) return;
 
     setEditMachine(log.machine_name);
+    setEditMotive(log.motive);
     setEditCategory(log.category);
     setEditSymptoms(log.symptoms);
     setEditSolution(log.solution_applied ?? "");
@@ -117,6 +127,7 @@ export default function LogDetailPage({
     }
 
     setEditMachine(log.machine_name);
+    setEditMotive(log.motive);
     setEditCategory(log.category);
     setEditSymptoms(log.symptoms);
     setEditSolution(log.solution_applied ?? "");
@@ -133,6 +144,7 @@ export default function LogDetailPage({
 
     if (log.status === "Pending") {
       setEditMachine(log.machine_name);
+      setEditMotive(log.motive);
       setEditCategory(log.category);
       setEditSymptoms(log.symptoms);
       setEditSolution(log.solution_applied ?? "");
@@ -143,9 +155,7 @@ export default function LogDetailPage({
 
     const success = await updateLog(log.id, { status: "Pending" }, mechanic);
     if (success) {
-      toast.success(
-        t("statusChangedPending"),
-      );
+      toast.success(t("statusChangedPending"));
     } else {
       toast.error(t("updateFailed"));
     }
@@ -155,6 +165,10 @@ export default function LogDetailPage({
     if (!log || !mechanic) return;
     if (!editMachine) {
       toast.error(t("selectMachineError"));
+      return;
+    }
+    if (!editMotive) {
+      toast.error(t("selectMotiveError"));
       return;
     }
     if (editCategory.length === 0) {
@@ -171,6 +185,7 @@ export default function LogDetailPage({
       log.id,
       {
         machine_name: editMachine,
+        motive: editMotive,
         category: editCategory,
         symptoms: editSymptoms.trim(),
         solution_applied: editSolution.trim() || null,
@@ -229,6 +244,9 @@ export default function LogDetailPage({
           </Badge>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Badge variant="secondary" className="rounded-full px-3 py-1">
+            {getMotiveLabel(log.motive, locale)}
+          </Badge>
           {log.category.map((category) => (
             <Badge
               key={category}
@@ -285,12 +303,23 @@ export default function LogDetailPage({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">{t("category")}</Label>
-              <CategoryChips value={editCategory} onValueChange={setEditCategory} />
+              <Label className="text-base font-semibold">{t("motive")}</Label>
+              <MotiveSelect value={editMotive} onValueChange={setEditMotive} />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-symptoms" className="text-base font-semibold">
+              <Label className="text-base font-semibold">{t("category")}</Label>
+              <CategoryChips
+                value={editCategory}
+                onValueChange={setEditCategory}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="edit-symptoms"
+                className="text-base font-semibold"
+              >
                 {t("symptoms")}
               </Label>
               <Textarea
@@ -304,7 +333,10 @@ export default function LogDetailPage({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-solution" className="text-base font-semibold">
+              <Label
+                htmlFor="edit-solution"
+                className="text-base font-semibold"
+              >
                 {t("solution")}{" "}
                 <span className="font-normal text-muted-foreground">
                   ({t("optional")})

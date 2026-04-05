@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MachineSelect } from "@/components/machine-select";
+import { MotiveSelect } from "@/components/motive-select";
 import { CategoryChips } from "@/components/category-chips";
 import { StatusToggle } from "@/components/status-toggle";
 import { CameraInput } from "@/components/camera-input";
@@ -14,6 +15,7 @@ import { useAuthContext } from "@/providers/auth-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { createLog, createMachine } from "@/hooks/use-logs";
 import type { LogCategory } from "@/lib/log-categories";
+import type { LogMotive } from "@/lib/log-motives";
 import { formatDate, formatTime } from "@/lib/utils";
 
 export default function NewLogPage() {
@@ -22,6 +24,7 @@ export default function NewLogPage() {
   const { locale, t } = useLocale();
 
   const [machine, setMachine] = useState("");
+  const [motive, setMotive] = useState<LogMotive | "">("");
   const [category, setCategory] = useState<LogCategory[]>([]);
   const [symptoms, setSymptoms] = useState("");
   const [solution, setSolution] = useState("");
@@ -36,6 +39,10 @@ export default function NewLogPage() {
 
     if (!machine) {
       toast.error(t("selectMachineError"));
+      return;
+    }
+    if (!motive) {
+      toast.error(t("selectMotiveError"));
       return;
     }
     if (category.length === 0) {
@@ -59,6 +66,7 @@ export default function NewLogPage() {
         {
           author_name: mechanic.name,
           machine_name: machine,
+          motive,
           category,
           symptoms: symptoms.trim(),
           solution_applied: solution.trim() || null,
@@ -104,11 +112,15 @@ export default function NewLogPage() {
 
         <div className="rounded-[2rem] border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-card/70">
           <div className="space-y-2">
+            <Label className="text-base font-semibold">{t("motive")}</Label>
+            <MotiveSelect value={motive} onValueChange={setMotive} />
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] border border-white/60 bg-white/80 p-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-card/70">
+          <div className="space-y-2">
             <Label className="text-base font-semibold">{t("category")}</Label>
-            <CategoryChips
-              value={category}
-              onValueChange={setCategory}
-            />
+            <CategoryChips value={category} onValueChange={setCategory} />
           </div>
         </div>
 

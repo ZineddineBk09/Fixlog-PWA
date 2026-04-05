@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { parseCategories, serializeCategories } from "./log-categories";
+import { normalizeMotive } from "./log-motives";
 import { supabase } from "./supabase";
 
 let isSyncing = false;
@@ -64,6 +65,7 @@ export const syncService = {
         updated_at: log.updated_at,
         author_name: log.author_name,
         machine_name: log.machine_name,
+        motive: log.motive,
         category: serializeCategories(log.category),
         symptoms: log.symptoms,
         solution_applied: log.solution_applied,
@@ -109,6 +111,7 @@ export const syncService = {
       const logsToPut = remoteLogs
         .map((log) => ({
           ...log,
+          motive: normalizeMotive(log.motive),
           category: parseCategories(log.category),
           sync_status: "synced" as const,
         }))

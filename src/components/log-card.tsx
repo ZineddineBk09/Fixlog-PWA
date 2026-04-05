@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   formatCategoryList,
   formatRelativeTime,
+  getMotiveLabel,
   getStatusLabel,
 } from "@/lib/utils";
 import { type LogRecord } from "@/lib/db";
@@ -30,6 +31,12 @@ export function LogCard({ log }: LogCardProps) {
                 {log.machine_name}
               </h3>
               <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className="shrink-0 rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+                >
+                  {getMotiveLabel(log.motive, locale)}
+                </Badge>
                 <Badge
                   variant="secondary"
                   className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200"

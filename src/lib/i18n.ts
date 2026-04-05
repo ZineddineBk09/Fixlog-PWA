@@ -55,6 +55,14 @@ export const messages = {
     machineExists: "هذه الماكينة موجودة بالفعل في الكتالوج.",
     machineCatalogNeedsInternet:
       "يلزم الاتصال بالإنترنت لحفظ الماكينة في الكتالوج.",
+    motive: "نوع التدخل",
+    selectMotive: "اختر نوع التدخل...",
+    selectMotiveError: "يرجى اختيار نوع التدخل.",
+    corrective: "إصلاح تصحيحي",
+    preventive: "صيانة وقائية",
+    inspection: "فحص",
+    calibration: "معايرة / ضبط",
+    emergency: "تدخل طارئ",
     category: "الفئة",
     mechanical: "ميكانيكي",
     electrical: "كهربائي",
@@ -231,6 +239,14 @@ export const messages = {
     machineExists: "This machine already exists in the catalog.",
     machineCatalogNeedsInternet:
       "Connect to the internet to save a machine to the catalog.",
+    motive: "Motive",
+    selectMotive: "Select maintenance motive...",
+    selectMotiveError: "Please select a maintenance motive.",
+    corrective: "Corrective repair",
+    preventive: "Preventive maintenance",
+    inspection: "Inspection",
+    calibration: "Calibration / adjustment",
+    emergency: "Emergency intervention",
     category: "Category",
     mechanical: "Mechanical",
     electrical: "Electrical",
@@ -385,6 +401,14 @@ export const categoryLabelKeys = {
   Software: "software",
   Pneumatic: "pneumatic",
   Hydraulics: "hydraulics",
+} as const;
+
+export const motiveLabelKeys = {
+  Corrective: "corrective",
+  Preventive: "preventive",
+  Inspection: "inspection",
+  Calibration: "calibration",
+  Emergency: "emergency",
 } as const;
 
 export const statusLabelKeys = {

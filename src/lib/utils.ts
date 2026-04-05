@@ -2,12 +2,14 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
   categoryLabelKeys,
+  motiveLabelKeys,
   statusLabelKeys,
   translate,
   type Locale,
 } from "@/lib/i18n";
 import type { LogCategory, LogEventRecord, LogStatus } from "@/lib/db";
 import type { InviteStatus } from "@/lib/invite-service";
+import type { LogMotive } from "@/lib/log-motives";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -86,6 +88,10 @@ export function getStatusLabel(status: LogStatus, locale: Locale) {
 
 export function getCategoryLabel(category: LogCategory, locale: Locale) {
   return translate(locale, categoryLabelKeys[category]);
+}
+
+export function getMotiveLabel(motive: LogMotive, locale: Locale) {
+  return translate(locale, motiveLabelKeys[motive]);
 }
 
 export function getCategoryLabels(categories: LogCategory[], locale: Locale) {
